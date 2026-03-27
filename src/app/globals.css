@@ -1,0 +1,148 @@
+@import "tailwindcss";
+
+/* ════════════════════════════════
+   主题色变量
+════════════════════════════════ */
+:root {
+  --bg: #faf8f3;
+  --ink: #1a1208;
+  --ink2: #7a6840;
+  --line: #e8dfc8;
+  --orel: #1a5c8a;
+  --jose: #8a4010;
+  --female: #8a2068;
+  --outsider: #2a6a2a;
+  --tip-bg: #fffff8;
+  --tip-bd: #c8b870;
+  --side-bg: #f5f0e8;
+}
+
+.dark {
+  --bg: #1a1508;
+  --ink: #e8d8b0;
+  --ink2: #9a8850;
+  --line: #3a3020;
+  --orel: #6ab4f0;
+  --jose: #d88848;
+  --female: #d870b8;
+  --outsider: #60c860;
+  --tip-bg: #241e0c;
+  --tip-bd: #806830;
+  --side-bg: #201a08;
+}
+
+/* ════════════════════════════════
+   Tailwind 主题扩展
+════════════════════════════════ */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-ink: var(--ink);
+  --color-ink2: var(--ink2);
+  --color-line: var(--line);
+  --color-orel: var(--orel);
+  --color-jose: var(--jose);
+  --color-female: var(--female);
+  --color-outsider: var(--outsider);
+  --color-tip-bg: var(--tip-bg);
+  --color-tip-bd: var(--tip-bd);
+  --color-side-bg: var(--side-bg);
+
+  --font-serif: Georgia, "Noto Serif SC", serif;
+  --font-ui: system-ui, sans-serif;
+}
+
+/* ════════════════════════════════
+   基础排版
+════════════════════════════════ */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: 19px;
+  line-height: 1.8;
+}
+
+/* ════════════════════════════════
+   人名注释 ruby 标签样式
+════════════════════════════════ */
+.cn {
+  display: inline ruby;
+  ruby-position: under;
+  ruby-align: start;
+  cursor: pointer;
+  text-decoration: underline dotted currentColor;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+.cn rt {
+  font-size: 11px;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  opacity: 0.55;
+  color: inherit;
+  user-select: none;
+  transition: opacity 0.15s;
+}
+
+.cn:hover rt {
+  opacity: 1;
+}
+
+.cn.pinned rt {
+  opacity: 1;
+}
+
+.cn.pinned {
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+.ct-orel {
+  color: var(--orel);
+}
+
+.ct-jose {
+  color: var(--jose);
+}
+
+.ct-female {
+  color: var(--female);
+}
+
+.ct-outsider {
+  color: var(--outsider);
+}
+
+/* ════════════════════════════════
+   Chip 半透明背景 (color-mix)
+════════════════════════════════ */
+.chip-orel {
+  background: color-mix(in srgb, var(--orel) 12%, transparent);
+  color: var(--orel);
+  border-color: color-mix(in srgb, var(--orel) 30%, transparent);
+}
+
+.chip-jose {
+  background: color-mix(in srgb, var(--jose) 12%, transparent);
+  color: var(--jose);
+  border-color: color-mix(in srgb, var(--jose) 30%, transparent);
+}
+
+.chip-female {
+  background: color-mix(in srgb, var(--female) 12%, transparent);
+  color: var(--female);
+  border-color: color-mix(in srgb, var(--female) 30%, transparent);
+}
+
+.chip-outsider {
+  background: color-mix(in srgb, var(--outsider) 12%, transparent);
+  color: var(--outsider);
+  border-color: color-mix(in srgb, var(--outsider) 30%, transparent);
+}

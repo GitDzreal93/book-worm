@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Book {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  title       String
+  subtitle    String?
+  author      String?
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  chapters    Chapter[]
+  characters  Character[]
+  relations   FamilyRelation[]
+}
+
+model Chapter {
+  id        String     @id @default(cuid())
+  bookId    String
+  book      Book       @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  number    Int
+  title     String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  paragraphs Paragraph[]
+
+  @@unique([bookId, number])
+  @@index([bookId])
+}
+
+model Paragraph {
+  id         String    @id @default(cuid())
+  chapterId  String
+  chapter    Chapter   @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  order      Int
+  content    String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  mentions CharacterMention[]
+
+  @@unique([chapterId, order])
+  @@index([chapterId])
+}
+
+model Character {
+  id         String              @id @default(cuid())
+  bookId     String
+  book       Book                @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  nick       String
+  orig       String
+  colorClass String
+  gen        String
+  desc       String
+  sortOrder  Int                 @default(0)
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  mentions          CharacterMention[]
+  familyAsPerson    FamilyRelation[] @relation("FamilyPerson")
+  familyAsRelative  FamilyRelation[] @relation("FamilyRelative")
+
+  @@unique([bookId, nick])
+  @@index([bookId])
+}
+
+model CharacterMention {
+  id          String    @id @default(cuid())
+  characterId String
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  paragraphId String
+  paragraph   Paragraph @relation(fields: [paragraphId], references: [id], onDelete: Cascade)
+  offset      Int
+  length      Int
+
+  @@index([characterId])
+  @@index([paragraphId])
+}
+
+model FamilyRelation {
+  id         String    @id @default(cuid())
+  bookId     String
+  book       Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  personId   String
+  relativeId String
+  type       String
+  note       String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  person   Character @relation("FamilyPerson", fields: [personId], references: [id], onDelete: Cascade)
+  relative Character @relation("FamilyRelative", fields: [relativeId], references: [id], onDelete: Cascade)
+
+  @@index([bookId])
+  @@index([personId])
+  @@index([relativeId])
+}
