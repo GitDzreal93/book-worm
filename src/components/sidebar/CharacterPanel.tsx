@@ -26,7 +26,7 @@ export function CharacterPanel({ characters }: Props) {
       {pinnedCharacter && <CharacterCard character={pinnedCharacter} />}
 
       <CharacterMap characters={characters} />
-      <Legend />
+      <Legend characters={characters} />
     </div>
   );
 }

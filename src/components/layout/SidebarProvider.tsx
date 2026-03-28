@@ -24,6 +24,7 @@ interface SidebarContextValue {
   showTranslation: boolean;
   setShowTranslation: (show: boolean) => void;
   bookSlug: string;
+  hasLLM: boolean;
 }
 
 const SidebarContext = createContext<SidebarContextValue | null>(null);
@@ -34,7 +35,7 @@ export function useSidebar() {
   return ctx;
 }
 
-export function SidebarProvider({ children, bookSlug }: { children: ReactNode; bookSlug?: string }) {
+export function SidebarProvider({ children, bookSlug, hasLLM = false }: { children: ReactNode; bookSlug?: string; hasLLM?: boolean }) {
   const [isOpen, setIsOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<SidebarTab>("toc");
   const [pinnedCharacter, setPinnedCharacter] = useState<CharacterData | null>(null);
@@ -76,6 +77,7 @@ export function SidebarProvider({ children, bookSlug }: { children: ReactNode; b
         showTranslation,
         setShowTranslation,
         bookSlug: bookSlug || "",
+        hasLLM,
       }}
     >
       {children}

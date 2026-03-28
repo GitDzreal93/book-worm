@@ -1,14 +1,16 @@
 "use client";
 
-import { useRef, useCallback, useEffect, useState } from "react";
+import { useRef, useCallback, useEffect, useState, useMemo } from "react";
 import { useSidebar } from "@/components/layout/SidebarProvider";
 import { HighlightToolbar } from "./HighlightToolbar";
+import { annotateText } from "@/lib/annotate";
 import type { CharacterData, HighlightData } from "@/lib/types";
 
 interface Props {
   content: string;
   paragraphId: string;
   bookId?: string;
+  characters?: CharacterData[];
   highlights?: HighlightData[];
   onCharHover?: (char: CharacterData, rect: DOMRect) => void;
   onCharUnhover?: () => void;
@@ -18,10 +20,16 @@ export function AnnotatedText({
   content,
   paragraphId,
   bookId,
+  characters = [],
   highlights = [],
   onCharHover,
   onCharUnhover,
 }: Props) {
+  // Apply client-side character annotation to inject ruby markup
+  const annotatedContent = useMemo(
+    () => (characters.length > 0 ? annotateText(content, characters) : content),
+    [content, characters],
+  );
   const ref = useRef<HTMLDivElement>(null);
   const { isShortNameMain, pinnedCharacter, setPinnedCharacter } = useSidebar();
 
@@ -216,7 +224,7 @@ export function AnnotatedText({
         ref={ref}
         className="text-[19px] mb-[1.4em] text-indent-[2em] leading-[2.2]"
         style={{ textIndent: "2em" }}
-        dangerouslySetInnerHTML={{ __html: content }}
+        dangerouslySetInnerHTML={{ __html: annotatedContent }}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         onClick={handleClick}

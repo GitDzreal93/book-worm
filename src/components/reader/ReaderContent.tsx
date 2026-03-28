@@ -8,6 +8,7 @@ interface Props {
   bookId?: string;
   bookSlug?: string;
   chapters: ChapterData[];
+  characters?: CharacterData[];
   onCharHover?: (char: CharacterData, rect: DOMRect) => void;
   onCharUnhover?: () => void;
 }
@@ -16,6 +17,7 @@ export function ReaderContent({
   bookId,
   bookSlug,
   chapters,
+  characters = [],
   onCharHover,
   onCharUnhover,
 }: Props) {
@@ -48,7 +50,9 @@ export function ReaderContent({
           key={chapter.id}
           chapter={chapter}
           bookId={bookId}
+          bookSlug={bookSlug}
           highlights={highlightsMap}
+          characters={characters}
           onCharHover={onCharHover}
           onCharUnhover={onCharUnhover}
         />

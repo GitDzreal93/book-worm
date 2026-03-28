@@ -2,7 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { SidebarProvider } from "@/components/layout/SidebarProvider";
 import { ReaderLayoutClient } from "./ReaderLayoutClient";
-import type { ChapterData, CharacterData, FamilyRelationData } from "@/lib/types";
+import { getSetting } from "@/lib/settings";
+import type { CharacterData, FamilyRelationData } from "@/lib/types";
 
 export default async function ReaderPage({
   params,
@@ -17,14 +18,11 @@ export default async function ReaderPage({
 
   if (!book) notFound();
 
+  // Load chapter metadata only — paragraphs are loaded per-chapter on demand.
   const chapters = await prisma.chapter.findMany({
     where: { bookId: book.id },
     orderBy: { number: "asc" },
-    include: {
-      paragraphs: {
-        orderBy: { order: "asc" },
-      },
-    },
+    select: { id: true, number: true, title: true, summary: true },
   });
 
   const characters = await prisma.character.findMany({
@@ -39,22 +37,16 @@ export default async function ReaderPage({
 
   const relations = await prisma.familyRelation.findMany({
     where: { bookId: book.id },
-    include: {
-      person: true,
-      relative: true,
-    },
+    include: { person: true, relative: true },
   });
 
-  const chapterData: ChapterData[] = chapters.map((ch) => ({
-    id: ch.id,
-    number: ch.number,
-    title: ch.title,
-    paragraphs: ch.paragraphs.map((p) => ({
-      id: p.id,
-      order: p.order,
-      content: p.content,
-    })),
-  }));
+  // Check if LLM is configured (provider + api key present)
+  const provider = await getSetting("default_provider");
+  const apiKeyField = provider ? `${provider}_api_key` : "openai_api_key";
+  const apiKey = await getSetting(
+    provider === "custom" ? "custom_provider_api_key" : apiKeyField,
+  );
+  const hasLLM = !!(provider && apiKey);
 
   const characterData: CharacterData[] = characters.map((c) => ({
     id: c.id,
@@ -84,14 +76,20 @@ export default async function ReaderPage({
   }));
 
   return (
-    <SidebarProvider bookSlug={book.slug}>
+    <SidebarProvider bookSlug={book.slug} hasLLM={hasLLM}>
       <ReaderLayoutClient
         bookId={book.id}
         bookTitle={book.title}
         bookSlug={book.slug}
-        chapters={chapterData}
+        chapterMeta={chapters.map((ch) => ({
+          id: ch.id,
+          number: ch.number,
+          title: ch.title,
+          summary: ch.summary ?? null,
+        }))}
         characters={characterData}
         relations={relationData}
+        hasLLM={hasLLM}
       />
     </SidebarProvider>
   );

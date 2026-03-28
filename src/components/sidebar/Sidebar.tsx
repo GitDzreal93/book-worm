@@ -9,16 +9,25 @@ import { FamilyTree } from "./FamilyTree";
 import { TranslationPanel } from "@/components/reader/TranslationPanel";
 import { NotesPanel } from "./NotesPanel";
 import { cn } from "@/lib/utils";
-import type { ChapterData, CharacterData, FamilyRelationData } from "@/lib/types";
+import type { CharacterData, FamilyRelationData } from "@/lib/types";
+
+interface ChapterMeta {
+  id: string;
+  number: number;
+  title: string;
+  summary?: string | null;
+}
 
 interface Props {
-  chapters: ChapterData[];
+  chapters: ChapterMeta[];
   characters: CharacterData[];
   relations: FamilyRelationData[];
+  currentChapterIdx: number;
+  onChapterSelect: (idx: number) => void;
 }
 
 /** 侧边栏内容区域，根据当前活动标签显示不同面板 */
-function SidebarContent({ chapters, characters, relations }: { chapters: ChapterData[]; characters: CharacterData[]; relations: FamilyRelationData[] }) {
+function SidebarContent({ chapters, characters, relations, currentChapterIdx, onChapterSelect }: { chapters: ChapterMeta[]; characters: CharacterData[]; relations: FamilyRelationData[]; currentChapterIdx: number; onChapterSelect: (idx: number) => void }) {
   const { activeTab, bookSlug } = useSidebar();
 
   switch (activeTab) {
@@ -31,11 +40,11 @@ function SidebarContent({ chapters, characters, relations }: { chapters: Chapter
     case "notes":
       return <NotesPanel bookSlug={bookSlug} />;
     default:
-      return <TableOfContents chapters={chapters} />;
+      return <TableOfContents chapters={chapters} currentChapterIdx={currentChapterIdx} onChapterSelect={onChapterSelect} />;
   }
 }
 
-export function Sidebar({ chapters, characters, relations }: Props) {
+export function Sidebar({ chapters, characters, relations, currentChapterIdx, onChapterSelect }: Props) {
   const { isOpen, width } = useSidebar();
 
   return (
@@ -51,7 +60,7 @@ export function Sidebar({ chapters, characters, relations }: Props) {
         <DragHandle />
         <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
           <SidebarTabs />
-          <SidebarContent chapters={chapters} characters={characters} relations={relations} />
+          <SidebarContent chapters={chapters} characters={characters} relations={relations} currentChapterIdx={currentChapterIdx} onChapterSelect={onChapterSelect} />
         </div>
       </div>
 
@@ -64,7 +73,7 @@ export function Sidebar({ chapters, characters, relations }: Props) {
       >
         <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
           <SidebarTabs />
-          <SidebarContent chapters={chapters} characters={characters} relations={relations} />
+          <SidebarContent chapters={chapters} characters={characters} relations={relations} currentChapterIdx={currentChapterIdx} onChapterSelect={onChapterSelect} />
         </div>
       </div>
     </>
