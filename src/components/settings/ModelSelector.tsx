@@ -51,7 +51,7 @@ export function ModelSelector({
       value={selectedModel}
       onChange={(e) => onChange(e.target.value)}
       disabled={loading}
-      className="w-full text-sm border border-line rounded-md px-3 py-2 bg-bg text-ink focus:outline-none focus:border-ink disabled:opacity-50"
+      className="input-base text-sm"
     >
       {loading ? (
         <option>加载模型列表...</option>

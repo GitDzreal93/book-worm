@@ -38,7 +38,7 @@ export function PromptEditor({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={3}
-        className="w-full text-sm border border-line rounded-md px-3 py-2 bg-bg text-ink placeholder:text-ink2 focus:outline-none focus:border-ink resize-y"
+        className="input-base text-sm resize-y"
       />
     </div>
   );

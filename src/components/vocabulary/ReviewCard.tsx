@@ -13,11 +13,12 @@ export function ReviewCard({ word, onSubmit }: Props) {
 
   return (
     <div
-      className="w-full max-w-md mx-auto cursor-pointer select-none perspective-600"
+      className="mx-auto w-full max-w-md cursor-pointer select-none"
+      style={{ perspective: "800px" }}
       onClick={() => setFlipped(!flipped)}
     >
       <div
-        className="relative transition-transform duration-300"
+        className="relative transition-transform duration-300 ease-out"
         style={{
           transformStyle: "preserve-3d",
           transform: flipped ? "rotateY(180deg)" : "rotateY(0)",
@@ -25,77 +26,105 @@ export function ReviewCard({ word, onSubmit }: Props) {
       >
         {/* Front */}
         <div
-          className="rounded-xl border border-line bg-bg p-8 text-center"
+          className="card p-10 text-center"
           style={{ backfaceVisibility: "hidden" }}
         >
-          <p className="text-2xl font-bold text-ink">{word.word}</p>
+          <p className="text-3xl font-serif font-bold text-ink tracking-tight">
+            {word.word}
+          </p>
           {word.phonetic && (
-            <p className="mt-2 text-sm text-ink2">{word.phonetic}</p>
+            <p className="mt-3 text-sm text-ink2">{word.phonetic}</p>
           )}
           {word.partOfSpeech && (
-            <p className="mt-1 text-xs text-orel">{word.partOfSpeech}</p>
+            <span className="mt-2 inline-block rounded-md bg-accent/10 px-2 py-0.5 text-xs font-ui font-medium text-accent">
+              {word.partOfSpeech}
+            </span>
           )}
           {word.contextSentence && (
-            <p className="mt-4 text-sm italic text-ink2 leading-relaxed">
-              「{word.contextSentence}」
+            <p className="mt-6 text-sm italic leading-relaxed text-ink2/70">
+              &ldquo;{word.contextSentence}&rdquo;
             </p>
           )}
-          <p className="mt-6 text-xs text-ink2 opacity-40">点击翻转查看释义</p>
+          <p className="mt-8 text-xs text-ink2/30 font-ui">点击翻转查看释义</p>
         </div>
 
         {/* Back */}
         <div
-          className="absolute inset-0 rounded-xl border border-line bg-bg p-8 text-center"
+          className="absolute inset-0 card p-10 text-center"
           style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
         >
-          <p className="text-sm text-ink2 mb-2">{word.word}</p>
-          <p className="text-xl font-semibold text-ink leading-relaxed">
+          <p className="text-sm text-ink2/60 mb-1 font-ui">{word.word}</p>
+          <p className="text-xl font-serif font-semibold text-ink leading-relaxed">
             {word.definition}
           </p>
           {word.partOfSpeech && (
-            <p className="mt-2 text-xs text-orel">{word.partOfSpeech}</p>
+            <span className="mt-3 inline-block rounded-md bg-accent/10 px-2 py-0.5 text-xs font-ui font-medium text-accent">
+              {word.partOfSpeech}
+            </span>
           )}
-          <p className="mt-4 text-xs text-ink2 opacity-40">点击翻转回正面</p>
+          <p className="mt-8 text-xs text-ink2/30 font-ui">点击翻转回正面</p>
         </div>
       </div>
 
-      {/* Rating buttons - always visible */}
+      {/* Rating buttons */}
       {flipped && (
-        <div
-          className="mt-6"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <ReviewControls onSubmit={(quality) => {
-            onSubmit(quality);
-            setFlipped(false);
-          }} />
+        <div className="mt-8" onClick={(e) => e.stopPropagation()}>
+          <p className="mb-3 text-center text-xs text-ink2/40 font-ui">你对这个词的掌握程度</p>
+          <div className="flex gap-2 justify-center">
+            <ReviewButton
+              value={0}
+              label="不认识"
+              colorClass="text-danger border-danger/20 hover:bg-danger/5"
+              onSubmit={(q) => { onSubmit(q); setFlipped(false); }}
+            />
+            <ReviewButton
+              value={1}
+              label="模糊"
+              colorClass="text-warning border-warning/20 hover:bg-warning/5"
+              onSubmit={(q) => { onSubmit(q); setFlipped(false); }}
+            />
+            <ReviewButton
+              value={3}
+              label="熟悉"
+              colorClass="text-accent border-accent/20 hover:bg-accent/5"
+              onSubmit={(q) => { onSubmit(q); setFlipped(false); }}
+            />
+            <ReviewButton
+              value={4}
+              label="掌握"
+              colorClass="text-success border-success/20 hover:bg-success/5"
+              onSubmit={(q) => { onSubmit(q); setFlipped(false); }}
+            />
+            <ReviewButton
+              value={5}
+              label="完美"
+              colorClass="text-success border-success/30 hover:bg-success/5"
+              onSubmit={(q) => { onSubmit(q); setFlipped(false); }}
+            />
+          </div>
         </div>
       )}
     </div>
   );
 }
 
-/** Review quality rating buttons */
-function ReviewControls({ onSubmit }: { onSubmit: (quality: number) => void }) {
-  const buttons = [
-    { value: 0, label: "不认识", color: "bg-red-500/10 text-red-600 border-red-500/20" },
-    { value: 1, label: "模糊", color: "bg-orange-500/10 text-orange-600 border-orange-500/20" },
-    { value: 3, label: "熟悉", color: "bg-yellow-500/10 text-yellow-700 border-yellow-500/20" },
-    { value: 4, label: "掌握", color: "bg-green-500/10 text-green-600 border-green-500/20" },
-    { value: 5, label: "完美", color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" },
-  ];
-
+function ReviewButton({
+  value,
+  label,
+  colorClass,
+  onSubmit,
+}: {
+  value: number;
+  label: string;
+  colorClass: string;
+  onSubmit: (quality: number) => void;
+}) {
   return (
-    <div className="flex gap-2 justify-center">
-      {buttons.map((btn) => (
-        <button
-          key={btn.value}
-          onClick={() => onSubmit(btn.value)}
-          className={`rounded-lg border px-3 py-2 text-xs font-ui transition-colors hover:opacity-80 ${btn.color}`}
-        >
-          {btn.label}
-        </button>
-      ))}
-    </div>
+    <button
+      onClick={() => onSubmit(value)}
+      className={`rounded-lg border px-4 py-2.5 text-xs font-ui font-medium transition-all duration-150 cursor-pointer ${colorClass}`}
+    >
+      {label}
+    </button>
   );
 }

@@ -142,29 +142,47 @@ export function SettingsPageClient() {
   const hasCustomKey = settings.custom_provider_api_key !== null;
 
   if (loading) {
-    return <p className="text-ink2 text-sm">加载中...</p>;
+    return (
+      <div className="space-y-4">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="skeleton h-24 rounded-xl" />
+        ))}
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Flash message */}
       {message && (
         <div
-          className={`px-4 py-2 rounded-md text-sm ${
+          className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-ui ${
             message.type === "success"
-              ? "bg-green-50 text-green-700"
-              : "bg-red-50 text-red-700"
+              ? "bg-success/10 text-success"
+              : "bg-danger/10 text-danger"
           }`}
         >
+          <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+            {message.type === "success" ? (
+              <polyline points="20 6 9 17 4 12" />
+            ) : (
+              <>
+                <circle cx="12" cy="12" r="10" />
+                <line x1="15" y1="9" x2="9" y2="15" />
+                <line x1="9" y1="9" x2="15" y2="15" />
+              </>
+            )}
+          </svg>
           {message.text}
         </div>
       )}
 
       {/* Service Provider Selection */}
       <section>
-        <h2 className="text-base font-semibold text-ink mb-3">
+        <h2 className="text-sm font-semibold text-ink font-ui mb-1">
           AI 服务商
         </h2>
+        <p className="text-xs text-ink2/60 mb-4">选择服务商并配置 API Key</p>
         <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {PRESET_PROVIDERS.map((provider) => (
             <ProviderCard
@@ -201,10 +219,10 @@ export function SettingsPageClient() {
                   default_model: customModel || settings.custom_provider_model || "",
                 });
             }}
-            className={`rounded-lg border-2 p-4 transition-colors cursor-pointer ${
+            className={`rounded-xl border-2 p-4 transition-colors cursor-pointer ${
               isCustomSelected
                 ? "border-ink bg-ink/5"
-                : "border-line hover:border-ink/30"
+                : "border-line hover:border-ink/20"
             }`}
           >
             <div className="flex items-center justify-between mb-2">
@@ -213,7 +231,7 @@ export function SettingsPageClient() {
                   {customName || "自定义服务商"}
                 </span>
                 {hasCustomKey && (
-                  <span className="inline-flex items-center gap-1 text-xs text-green-600">
+                  <span className="inline-flex items-center gap-1 text-xs text-success">
                     <svg
                       className="w-3 h-3"
                       fill="none"
@@ -249,7 +267,7 @@ export function SettingsPageClient() {
                     void handleCustomDelete();
                   }}
                   disabled={customDeleting}
-                  className="text-xs text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
+                  className="text-xs text-danger hover:text-danger/80 transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   {customDeleting ? "删除中..." : "删除"}
                 </button>
@@ -266,21 +284,21 @@ export function SettingsPageClient() {
                 placeholder="服务商名称"
                 value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
-                className="w-full text-xs border border-line rounded px-2 py-1.5 bg-bg text-ink placeholder:text-ink2 focus:outline-none focus:border-ink"
+                className="input-base"
               />
               <input
                 type="text"
                 placeholder="Base URL (如 https://api.example.com)"
                 value={customBaseUrl}
                 onChange={(e) => setCustomBaseUrl(e.target.value)}
-                className="w-full text-xs border border-line rounded px-2 py-1.5 bg-bg text-ink placeholder:text-ink2 focus:outline-none focus:border-ink"
+                className="input-base"
               />
               <input
                 type="text"
                 placeholder="模型名称"
                 value={customModel}
                 onChange={(e) => setCustomModel(e.target.value)}
-                className="w-full text-xs border border-line rounded px-2 py-1.5 bg-bg text-ink placeholder:text-ink2 focus:outline-none focus:border-ink"
+                className="input-base"
               />
               <div className="flex gap-2">
                 <input
@@ -288,7 +306,7 @@ export function SettingsPageClient() {
                   placeholder="API Key"
                   value={customApiKey}
                   onChange={(e) => setCustomApiKey(e.target.value)}
-                  className="flex-1 min-w-0 text-xs border border-line rounded px-2 py-1.5 bg-bg text-ink placeholder:text-ink2 focus:outline-none focus:border-ink"
+                  className="input-base min-w-0"
                 />
                 <button
                   type="button"
@@ -300,10 +318,10 @@ export function SettingsPageClient() {
                 </button>
               </div>
               {customVerifyResult === "success" && (
-                <p className="text-xs text-green-600">API Key 验证成功</p>
+                <p className="text-xs text-success">API Key 验证成功</p>
               )}
               {customVerifyResult === "error" && (
-                <p className="text-xs text-red-600">{customVerifyError}</p>
+                <p className="text-xs text-danger">{customVerifyError}</p>
               )}
             </div>
           </div>
@@ -312,7 +330,8 @@ export function SettingsPageClient() {
 
       {/* Model Selection */}
       <section>
-        <h2 className="text-base font-semibold text-ink mb-3">模型</h2>
+        <h2 className="text-sm font-semibold text-ink font-ui mb-1">模型</h2>
+        <p className="text-xs text-ink2/60 mb-4">选择用于翻译和查词的模型</p>
         <ModelSelector
           provider={settings.default_provider}
           selectedModel={settings.default_model}
@@ -322,9 +341,10 @@ export function SettingsPageClient() {
 
       {/* Prompt Configuration */}
       <section>
-        <h2 className="text-base font-semibold text-ink mb-3">
+        <h2 className="text-sm font-semibold text-ink font-ui mb-1">
           提示词配置
         </h2>
+        <p className="text-xs text-ink2/60 mb-4">自定义 AI 的翻译、查词和摘要提示词</p>
         <div className="space-y-4">
           <PromptEditor
             label="翻译提示词"

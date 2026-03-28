@@ -15,6 +15,12 @@
   --tip-bg: #fffff8;
   --tip-bd: #c8b870;
   --side-bg: #f5f0e8;
+
+  --accent: #1a5c8a;
+  --accent-hover: #154870;
+  --success: #2d7a3a;
+  --warning: #a86820;
+  --danger: #a83030;
 }
 
 .dark {
@@ -29,6 +35,12 @@
   --tip-bg: #241e0c;
   --tip-bd: #806830;
   --side-bg: #201a08;
+
+  --accent: #6ab4f0;
+  --accent-hover: #88c8ff;
+  --success: #4caf60;
+  --warning: #d8a040;
+  --danger: #e85050;
 }
 
 /* ════════════════════════════════
@@ -46,9 +58,14 @@
   --color-tip-bg: var(--tip-bg);
   --color-tip-bd: var(--tip-bd);
   --color-side-bg: var(--side-bg);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
 
   --font-serif: Georgia, "Noto Serif SC", serif;
-  --font-ui: system-ui, sans-serif;
+  --font-ui: system-ui, -apple-system, sans-serif;
 }
 
 /* ════════════════════════════════
@@ -145,4 +162,199 @@ body {
   background: color-mix(in srgb, var(--outsider) 12%, transparent);
   color: var(--outsider);
   border-color: color-mix(in srgb, var(--outsider) 30%, transparent);
+}
+
+/* ════════════════════════════════
+   Skeleton 加载动画
+════════════════════════════════ */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.skeleton {
+  background-color: var(--line);
+  animation: skeleton-pulse 1.8s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+/* ════════════════════════════════
+   自定义滚动条
+════════════════════════════════ */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--ink2) 25%, transparent);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--ink2) 40%, transparent);
+}
+
+/* ════════════════════════════════
+   无障碍：减少动画
+════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ════════════════════════════════
+   通用页面头部
+════════════════════════════════ */
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.page-title {
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+
+.page-desc {
+  margin-top: 0.375rem;
+  font-size: 0.875rem;
+  color: var(--ink2);
+  line-height: 1.6;
+}
+
+/* ════════════════════════════════
+   空状态
+════════════════════════════════ */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--line) 40%, transparent);
+}
+
+.empty-state svg {
+  width: 4rem;
+  height: 4rem;
+  color: var(--ink2);
+  opacity: 0.3;
+  margin-bottom: 1rem;
+}
+
+.empty-state-title {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--ink2);
+  font-family: var(--font-ui);
+}
+
+.empty-state-desc {
+  margin-top: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--ink2);
+  opacity: 0.7;
+  text-align: center;
+  max-width: 24rem;
+}
+
+/* ════════════════════════════════
+   通用卡片
+════════════════════════════════ */
+.card {
+  background: var(--tip-bg);
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.card:hover {
+  border-color: color-mix(in srgb, var(--ink2) 30%, transparent);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
+/* ════════════════════════════════
+   通用输入框
+════════════════════════════════ */
+.input-base {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  background: var(--bg);
+  color: var(--ink);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+}
+
+.input-base::placeholder {
+  color: color-mix(in srgb, var(--ink2) 50%, transparent);
+}
+
+.input-base:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+/* ════════════════════════════════
+   通用按钮
+════════════════════════════════ */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-family: var(--font-ui);
+  color: var(--bg);
+  background: var(--ink);
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.btn-primary:hover {
+  background: var(--ink2);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-family: var(--font-ui);
+  color: var(--ink2);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-secondary:hover {
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  border-color: color-mix(in srgb, var(--ink2) 30%, transparent);
+  color: var(--ink);
 }

@@ -36,7 +36,7 @@ export default function VocabularyPage() {
       setWords(data.words);
       setTotal(data.total);
     } catch {
-      // 静默处理
+      // silent
     } finally {
       setLoading(false);
     }
@@ -50,21 +50,35 @@ export default function VocabularyPage() {
 
   return (
     <main className="min-h-screen bg-bg">
-      <div className="mx-auto max-w-3xl px-6 py-8">
-        <h1 className="text-2xl font-bold text-ink font-ui mb-6">生词本</h1>
+      <div className="mx-auto max-w-3xl px-6 py-10">
+        <div className="page-header">
+          <h1 className="page-title">生词本</h1>
+          <p className="page-desc">
+            共 {total} 个生词
+          </p>
+        </div>
 
         {/* Filters */}
-        <div className="mb-6 flex flex-wrap items-center gap-3">
-          <input
-            type="text"
-            placeholder="搜索单词..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            className="rounded-lg border border-line bg-bg px-3 py-1.5 text-sm text-ink placeholder:text-ink2/40 focus:border-orel focus:outline-none"
-          />
+        <div className="mb-6 flex items-center gap-3">
+          {/* Search */}
+          <div className="relative flex-1 max-w-xs">
+            <svg className="absolute top-1/2 left-3 -translate-y-1/2 h-3.5 w-3.5 text-ink2/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="text"
+              placeholder="搜索单词..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              className="input-base pl-9"
+            />
+          </div>
+
+          {/* Sort pills */}
           <div className="flex gap-1 rounded-lg border border-line p-0.5">
             {[
               { value: "recent", label: "最近" },
@@ -77,9 +91,9 @@ export default function VocabularyPage() {
                   setSort(opt.value);
                   setPage(1);
                 }}
-                className={`rounded-md px-3 py-1 text-xs font-ui transition-colors ${
+                className={`rounded-md px-3 py-1 text-xs font-ui transition-colors cursor-pointer ${
                   sort === opt.value
-                    ? "bg-ink text-bg"
+                    ? "bg-ink text-bg font-medium"
                     : "text-ink2 hover:text-ink"
                 }`}
               >
@@ -87,22 +101,27 @@ export default function VocabularyPage() {
               </button>
             ))}
           </div>
-          <span className="text-xs text-ink2 opacity-50">
-            共 {total} 词
-          </span>
         </div>
 
         {/* Word list */}
         {loading ? (
-          <div className="flex items-center justify-center py-20 text-sm text-ink2">
-            加载中...
+          <div className="flex flex-col gap-3">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="skeleton h-20 rounded-xl" />
+            ))}
           </div>
         ) : words.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-line py-20">
-            <p className="text-lg text-ink2">
+          <div className="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+              <line x1="8" y1="7" x2="16" y2="7" />
+              <line x1="8" y1="11" x2="14" y2="11" />
+            </svg>
+            <p className="empty-state-title">
               {search ? "没有找到匹配的单词" : "生词本还是空的"}
             </p>
-            <p className="mt-2 text-sm text-ink2">
+            <p className="empty-state-desc">
               {search
                 ? "试试其他关键词"
                 : "在阅读时点击外文单词即可加入生词本"}
@@ -118,21 +137,21 @@ export default function VocabularyPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="mt-6 flex items-center justify-center gap-2">
+          <div className="mt-8 flex items-center justify-center gap-2">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="rounded-lg border border-line px-3 py-1.5 text-xs font-ui text-ink2 disabled:opacity-30 hover:text-ink"
+              className="btn-secondary disabled:opacity-30 disabled:pointer-events-none"
             >
               上一页
             </button>
-            <span className="text-xs text-ink2 opacity-50">
+            <span className="px-3 text-xs text-ink2/60 font-ui">
               {page} / {totalPages}
             </span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="rounded-lg border border-line px-3 py-1.5 text-xs font-ui text-ink2 disabled:opacity-30 hover:text-ink"
+              className="btn-secondary disabled:opacity-30 disabled:pointer-events-none"
             >
               下一页
             </button>

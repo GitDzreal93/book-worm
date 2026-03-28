@@ -13,7 +13,23 @@ interface BookCardProps {
   description: string | null;
 }
 
-/** 书架上的书籍卡片，显示封面缩略图、标题、作者和阅读进度 */
+const COVER_GRADIENTS = [
+  "from-amber-800/20 via-orange-700/10 to-yellow-700/5",
+  "from-emerald-800/20 via-teal-700/10 to-cyan-700/5",
+  "from-indigo-800/20 via-violet-700/10 to-purple-700/5",
+  "from-rose-800/20 via-pink-700/10 to-fuchsia-700/5",
+  "from-slate-800/20 via-zinc-700/10 to-neutral-700/5",
+  "from-cyan-800/20 via-sky-700/10 to-blue-700/5",
+];
+
+function getGradient(title: string) {
+  let hash = 0;
+  for (let i = 0; i < title.length; i++) {
+    hash = title.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return COVER_GRADIENTS[Math.abs(hash) % COVER_GRADIENTS.length];
+}
+
 export function BookCard({
   slug,
   title,
@@ -26,66 +42,75 @@ export function BookCard({
   const [showDetail, setShowDetail] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // Close detail on click outside
   useEffect(() => {
     if (!showDetail) return;
-
     function handleClickOutside(e: MouseEvent) {
       if (cardRef.current && !cardRef.current.contains(e.target as Node)) {
         setShowDetail(false);
       }
     }
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showDetail]);
 
+  const isCompleted = readPercentage >= 100;
+
   return (
-    <div ref={cardRef} className="relative">
+    <div ref={cardRef} className="relative group">
       <Link
         href={`/read/${slug}`}
-        className="group flex flex-col overflow-hidden rounded-lg border border-line bg-tip-bg transition-shadow hover:shadow-lg"
+        className="flex flex-col overflow-hidden rounded-lg border border-line bg-tip-bg transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:border-ink2/20"
       >
-        {/* 封面缩略图 */}
+        {/* Cover */}
         <div className="relative aspect-[2/3] w-full overflow-hidden bg-line">
           {coverImage ? (
             <img
               src={coverImage}
               alt={title}
-              className="h-full w-full object-cover transition-transform group-hover:scale-105"
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center p-4">
-              <span className="text-center text-sm text-ink2 leading-relaxed">
+            <div className={`flex h-full w-full flex-col items-center justify-center bg-gradient-to-br ${getGradient(title)} p-4`}>
+              <span className="text-center font-serif text-lg font-bold leading-tight text-ink/60">
+                {title.charAt(0)}
+              </span>
+              <span className="mt-2 text-center text-xs leading-relaxed text-ink/40 line-clamp-3">
                 {title}
               </span>
             </div>
           )}
 
-          {/* 阅读进度条 */}
-          {readPercentage > 0 && (
-            <div className="absolute right-0 bottom-0 left-0">
-              <div className="h-1 bg-line">
+          {/* Progress overlay */}
+          {readPercentage > 0 && readPercentage < 100 && (
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-3 pb-2 pt-6">
+              <div className="h-1 w-full overflow-hidden rounded-full bg-white/30">
                 <div
-                  className="h-full bg-orel transition-all"
+                  className="h-full rounded-full bg-white/90 transition-all"
                   style={{ width: `${Math.min(readPercentage, 100)}%` }}
                 />
               </div>
             </div>
           )}
+
+          {/* Completed badge */}
+          {isCompleted && (
+            <div className="absolute top-2 left-2 rounded-md bg-success/90 px-1.5 py-0.5 text-[10px] font-ui font-medium text-white">
+              已读
+            </div>
+          )}
         </div>
 
-        {/* 书籍信息 */}
-        <div className="flex flex-1 flex-col p-3">
-          <h3 className="line-clamp-2 text-sm font-semibold text-ink leading-tight font-ui">
+        {/* Info */}
+        <div className="flex flex-1 flex-col p-3 pt-2.5">
+          <h3 className="line-clamp-2 text-[13px] font-semibold leading-snug text-ink font-ui">
             {title}
           </h3>
           {author && (
-            <p className="mt-1 truncate text-xs text-ink2">{author}</p>
+            <p className="mt-0.5 truncate text-xs text-ink2/70">{author}</p>
           )}
           {totalChapters > 0 && (
-            <p className="mt-auto pt-2 text-xs text-ink2">
-              {Math.round(readPercentage)}% 已读 · {totalChapters} 章
+            <p className="mt-auto pt-1.5 text-[11px] text-ink2/50 font-ui">
+              {Math.round(readPercentage)}% · {totalChapters} 章
             </p>
           )}
         </div>
@@ -99,16 +124,20 @@ export function BookCard({
             e.stopPropagation();
             setShowDetail(!showDetail);
           }}
-          className="absolute top-2 right-2 z-10 w-6 h-6 rounded-full bg-bg/80 border border-line flex items-center justify-center text-[10px] text-ink2 opacity-0 group-hover:opacity-100 transition-opacity hover:text-ink"
+          className="absolute top-2 right-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-bg/80 text-ink2 opacity-0 backdrop-blur-sm transition-opacity hover:text-ink group-hover:opacity-100 cursor-pointer"
           title="查看简介"
         >
-          i
+          <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="16" x2="12" y2="12" />
+            <line x1="12" y1="8" x2="12.01" y2="8" />
+          </svg>
         </button>
       )}
 
       {/* Detail panel */}
       {showDetail && description && (
-        <div className="absolute top-full left-0 right-0 mt-1 z-20 rounded-lg border border-line bg-bg p-3 shadow-lg text-xs text-ink2 leading-relaxed max-h-40 overflow-y-auto">
+        <div className="absolute left-0 right-0 top-full z-20 mt-2 max-h-40 overflow-y-auto rounded-lg border border-line bg-bg p-3 shadow-xl text-xs leading-relaxed text-ink2">
           {description}
         </div>
       )}

@@ -21,7 +21,7 @@ export default function ReviewPage() {
       setReviewed(0);
       setDone(false);
     } catch {
-      // 静默处理
+      // silent
     } finally {
       setLoading(false);
     }
@@ -43,7 +43,7 @@ export default function ReviewPage() {
           body: JSON.stringify({ wordId: word.id, quality }),
         });
       } catch {
-        // 静默处理
+        // silent
       }
 
       const newCount = reviewed + 1;
@@ -61,8 +61,10 @@ export default function ReviewPage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-bg">
-        <div className="flex items-center justify-center py-20 text-sm text-ink2">
-          加载中...
+        <div className="mx-auto max-w-3xl px-6 py-10">
+          <div className="skeleton h-7 w-16 mb-8" />
+          <div className="skeleton h-1 max-w-xs rounded-full mb-8" />
+          <div className="skeleton h-64 rounded-xl mx-auto max-w-md" />
         </div>
       </main>
     );
@@ -71,11 +73,17 @@ export default function ReviewPage() {
   if (words.length === 0) {
     return (
       <main className="min-h-screen bg-bg">
-        <div className="mx-auto max-w-3xl px-6 py-8">
-          <h1 className="text-2xl font-bold text-ink font-ui mb-6">复习</h1>
-          <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-line py-20">
-            <p className="text-lg text-ink2">暂无待复习单词</p>
-            <p className="mt-2 text-sm text-ink2">
+        <div className="mx-auto max-w-3xl px-6 py-10">
+          <div className="page-header">
+            <h1 className="page-title">复习</h1>
+          </div>
+          <div className="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+              <polyline points="17 6 23 6 23 12" />
+            </svg>
+            <p className="empty-state-title">暂无待复习单词</p>
+            <p className="empty-state-desc">
               继续阅读积累生词，或稍后再来查看
             </p>
           </div>
@@ -87,18 +95,26 @@ export default function ReviewPage() {
   if (done) {
     return (
       <main className="min-h-screen bg-bg">
-        <div className="mx-auto max-w-3xl px-6 py-8">
-          <h1 className="text-2xl font-bold text-ink font-ui mb-6">复习</h1>
-          <div className="flex flex-col items-center justify-center rounded-xl border border-line py-20">
-            <p className="text-xl font-semibold text-ink">
-              复习完成！
+        <div className="mx-auto max-w-3xl px-6 py-10">
+          <div className="page-header">
+            <h1 className="page-title">复习</h1>
+          </div>
+          <div className="flex flex-col items-center justify-center rounded-xl border border-line bg-tip-bg py-20">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
+              <svg className="h-8 w-8 text-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+            </div>
+            <p className="text-xl font-serif font-bold text-ink">
+              复习完成
             </p>
             <p className="mt-2 text-sm text-ink2">
               本次复习了 {reviewed} 个单词
             </p>
             <button
               onClick={fetchDueWords}
-              className="mt-6 rounded-lg bg-ink px-4 py-2 text-sm text-bg font-ui transition-colors hover:bg-ink2"
+              className="btn-primary mt-6"
             >
               再来一轮
             </button>
@@ -109,24 +125,23 @@ export default function ReviewPage() {
   }
 
   const currentWord = words[currentIndex];
+  const progress = (currentIndex / words.length) * 100;
 
   return (
     <main className="min-h-screen bg-bg">
-      <div className="mx-auto max-w-3xl px-6 py-8">
+      <div className="mx-auto max-w-3xl px-6 py-10">
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-ink font-ui">复习</h1>
-          <span className="text-xs text-ink2 opacity-50">
+          <h1 className="page-title">复习</h1>
+          <span className="text-xs text-ink2/50 font-ui">
             {currentIndex + 1} / {words.length}
           </span>
         </div>
 
         {/* Progress bar */}
-        <div className="mb-8 h-1 overflow-hidden rounded-full bg-line">
+        <div className="mb-10 h-1 overflow-hidden rounded-full bg-line">
           <div
-            className="h-full rounded-full bg-orel transition-all duration-300"
-            style={{
-              width: `${((currentIndex) / words.length) * 100}%`,
-            }}
+            className="h-full rounded-full bg-accent transition-all duration-300 ease-out"
+            style={{ width: `${progress}%` }}
           />
         </div>
 

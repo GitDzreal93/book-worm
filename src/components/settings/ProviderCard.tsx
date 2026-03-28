@@ -89,10 +89,10 @@ export function ProviderCard({
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") onSelect();
       }}
-      className={`rounded-lg border-2 p-4 transition-colors cursor-pointer ${
+      className={`rounded-xl border-2 p-4 transition-colors cursor-pointer ${
         selected
           ? "border-ink bg-ink/5"
-          : "border-line hover:border-ink/30"
+          : "border-line hover:border-ink/20"
       }`}
     >
       {/* Header */}
@@ -102,7 +102,7 @@ export function ProviderCard({
             {displayName}
           </span>
           {hasKey && (
-            <span className="inline-flex items-center gap-1 text-xs text-green-600">
+            <span className="inline-flex items-center gap-1 text-xs text-success">
               <svg
                 className="w-3 h-3"
                 fill="none"
@@ -156,13 +156,13 @@ export function ProviderCard({
             placeholder="输入 API Key"
             value={inputKey}
             onChange={(e) => setInputKey(e.target.value)}
-            className="flex-1 min-w-0 text-xs border border-line rounded px-2 py-1.5 bg-bg text-ink placeholder:text-ink2 focus:outline-none focus:border-ink"
+            className="input-base min-w-0"
           />
           <button
             type="button"
             onClick={() => void handleVerify()}
             disabled={verifying || !inputKey.trim()}
-            className="text-xs px-3 py-1.5 rounded bg-ink text-bg font-medium disabled:opacity-50 transition-colors"
+            className="text-xs px-3 py-1.5 rounded-md bg-ink text-bg font-medium disabled:opacity-50 transition-colors cursor-pointer"
           >
             {verifying ? "验证中..." : "验证"}
           </button>
@@ -170,10 +170,10 @@ export function ProviderCard({
 
         {/* Verify status */}
         {verifyResult === "success" && (
-          <p className="text-xs text-green-600 mt-1">API Key 验证成功</p>
+          <p className="text-xs text-success mt-1">API Key 验证成功</p>
         )}
         {verifyResult === "error" && (
-          <p className="text-xs text-red-600 mt-1">{verifyError}</p>
+          <p className="text-xs text-danger mt-1">{verifyError}</p>
         )}
       </div>
     </div>
