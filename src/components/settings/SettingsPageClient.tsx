@@ -2,9 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { AISettings } from "@/types/settings";
-import { DEFAULT_SETTINGS, PRESET_PROVIDERS, CUSTOM_PROVIDER } from "@/types/settings";
-import { getDefaultModelId } from "@/lib/default-prompts";
-import { ProviderCard } from "./ProviderCard";
+import { DEFAULT_SETTINGS } from "@/types/settings";
+import { ProviderSelector } from "./ProviderSelector";
 import { ModelSelector } from "./ModelSelector";
 import { PromptEditor } from "./PromptEditor";
 
@@ -17,28 +16,13 @@ export function SettingsPageClient() {
     text: string;
   } | null>(null);
 
-  // Custom provider form state
-  const [customBaseUrl, setCustomBaseUrl] = useState("");
-  const [customName, setCustomName] = useState("");
-  const [customModel, setCustomModel] = useState("");
-  const [customApiKey, setCustomApiKey] = useState("");
-  const [customVerifying, setCustomVerifying] = useState(false);
-  const [customVerifyResult, setCustomVerifyResult] = useState<
-    "idle" | "success" | "error"
-  >("idle");
-  const [customVerifyError, setCustomVerifyError] = useState("");
-  const [customDeleting, setCustomDeleting] = useState(false);
-
+  
   const loadSettings = useCallback(async () => {
     try {
       const res = await fetch("/api/settings");
       const data = (await res.json()) as { settings: AISettings };
       const s = { ...DEFAULT_SETTINGS, ...data.settings };
       setSettings(s);
-      // Populate custom form from loaded settings.
-      setCustomBaseUrl(s.custom_provider_base_url ?? "");
-      setCustomName(s.custom_provider_name ?? "");
-      setCustomModel(s.custom_provider_model ?? "");
     } catch {
       // Keep defaults on error.
     } finally {
@@ -79,67 +63,10 @@ export function SettingsPageClient() {
     [],
   );
 
-  const handleCustomVerify = async () => {
-    if (!customBaseUrl.trim() || !customApiKey.trim()) return;
+  const handleProviderChange = useCallback((provider: string, model: string) => {
+    void saveSettings({ default_provider: provider, default_model: model });
+  }, [saveSettings]);
 
-    setCustomVerifying(true);
-    setCustomVerifyResult("idle");
-    setCustomVerifyError("");
-
-    try {
-      const res = await fetch("/api/settings/verify-key", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          provider: CUSTOM_PROVIDER,
-          apiKey: customApiKey.trim(),
-          baseUrl: customBaseUrl.trim(),
-          name: customName.trim(),
-          model: customModel.trim(),
-        }),
-      });
-
-      const data = (await res.json()) as {
-        valid?: boolean;
-        error?: string;
-      };
-
-      if (data.valid) {
-        setCustomVerifyResult("success");
-        setCustomApiKey("");
-        await loadSettings();
-      } else {
-        setCustomVerifyResult("error");
-        setCustomVerifyError(data.error ?? "验证失败");
-      }
-    } catch {
-      setCustomVerifyResult("error");
-      setCustomVerifyError("网络错误");
-    } finally {
-      setCustomVerifying(false);
-    }
-  };
-
-  const handleCustomDelete = async () => {
-    setCustomDeleting(true);
-    try {
-      await fetch("/api/settings/verify-key", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider: CUSTOM_PROVIDER }),
-      });
-      setCustomBaseUrl("");
-      setCustomName("");
-      setCustomModel("");
-      setCustomApiKey("");
-      await loadSettings();
-    } finally {
-      setCustomDeleting(false);
-    }
-  };
-
-  const isCustomSelected = settings.default_provider === CUSTOM_PROVIDER;
-  const hasCustomKey = settings.custom_provider_api_key !== null;
 
   if (loading) {
     return (
@@ -183,149 +110,11 @@ export function SettingsPageClient() {
           AI 服务商
         </h2>
         <p className="text-xs text-ink2/60 mb-4">选择服务商并配置 API Key</p>
-        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {PRESET_PROVIDERS.map((provider) => (
-            <ProviderCard
-              key={provider}
-              provider={provider}
-              selected={settings.default_provider === provider}
-              maskedKey={
-                (settings[`${provider}_api_key` as keyof AISettings] as string | null) ?? null
-              }
-              onSelect={() =>
-                saveSettings({
-                  default_provider: provider,
-                  default_model: getDefaultModelId(provider),
-                })
-              }
-              onVerified={() => void loadSettings()}
-            />
-          ))}
-
-          {/* Custom Provider Card */}
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={() =>
-              saveSettings({
-                default_provider: CUSTOM_PROVIDER,
-                default_model: customModel || settings.custom_provider_model || "",
-              })
-            }
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ")
-                saveSettings({
-                  default_provider: CUSTOM_PROVIDER,
-                  default_model: customModel || settings.custom_provider_model || "",
-                });
-            }}
-            className={`rounded-xl border-2 p-4 transition-colors cursor-pointer ${
-              isCustomSelected
-                ? "border-ink bg-ink/5"
-                : "border-line hover:border-ink/20"
-            }`}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-ink">
-                  {customName || "自定义服务商"}
-                </span>
-                {hasCustomKey && (
-                  <span className="inline-flex items-center gap-1 text-xs text-success">
-                    <svg
-                      className="w-3 h-3"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={3}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                    已配置
-                  </span>
-                )}
-              </div>
-              {isCustomSelected && (
-                <span className="text-xs text-ink2">当前选择</span>
-              )}
-            </div>
-
-            {/* Custom provider masked key */}
-            {hasCustomKey && !customApiKey && (
-              <div className="flex items-center justify-between mt-1">
-                <code className="text-xs text-ink2 bg-ink/5 px-2 py-1 rounded">
-                  {settings.custom_provider_api_key}
-                </code>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    void handleCustomDelete();
-                  }}
-                  disabled={customDeleting}
-                  className="text-xs text-danger hover:text-danger/80 transition-colors disabled:opacity-50 cursor-pointer"
-                >
-                  {customDeleting ? "删除中..." : "删除"}
-                </button>
-              </div>
-            )}
-
-            {/* Custom provider form */}
-            <div
-              className="mt-3 space-y-2"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <input
-                type="text"
-                placeholder="服务商名称"
-                value={customName}
-                onChange={(e) => setCustomName(e.target.value)}
-                className="input-base"
-              />
-              <input
-                type="text"
-                placeholder="Base URL (如 https://api.example.com)"
-                value={customBaseUrl}
-                onChange={(e) => setCustomBaseUrl(e.target.value)}
-                className="input-base"
-              />
-              <input
-                type="text"
-                placeholder="模型名称"
-                value={customModel}
-                onChange={(e) => setCustomModel(e.target.value)}
-                className="input-base"
-              />
-              <div className="flex gap-2">
-                <input
-                  type="password"
-                  placeholder="API Key"
-                  value={customApiKey}
-                  onChange={(e) => setCustomApiKey(e.target.value)}
-                  className="input-base min-w-0"
-                />
-                <button
-                  type="button"
-                  onClick={() => void handleCustomVerify()}
-                  disabled={customVerifying || !customBaseUrl.trim() || !customApiKey.trim()}
-                  className="text-xs px-3 py-1.5 rounded bg-ink text-bg font-medium disabled:opacity-50 transition-colors"
-                >
-                  {customVerifying ? "验证中..." : "验证"}
-                </button>
-              </div>
-              {customVerifyResult === "success" && (
-                <p className="text-xs text-success">API Key 验证成功</p>
-              )}
-              {customVerifyResult === "error" && (
-                <p className="text-xs text-danger">{customVerifyError}</p>
-              )}
-            </div>
-          </div>
-        </div>
+        <ProviderSelector
+          settings={settings}
+          onProviderChange={handleProviderChange}
+          onVerified={() => void loadSettings()}
+        />
       </section>
 
       {/* Model Selection */}
