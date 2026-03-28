@@ -3,10 +3,12 @@
 import { useSidebar } from "@/components/layout/SidebarProvider";
 import { cn } from "@/lib/utils";
 
-const tabs: { key: "toc" | "char" | "tree"; label: string }[] = [
+const tabs: { key: "toc" | "char" | "tree" | "translate" | "notes"; label: string }[] = [
   { key: "toc", label: "目录" },
   { key: "char", label: "人物" },
   { key: "tree", label: "关系图" },
+  { key: "translate", label: "翻译" },
+  { key: "notes", label: "笔记" },
 ];
 
 export function SidebarTabs() {

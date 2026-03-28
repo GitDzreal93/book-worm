@@ -1,36 +1,106 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BookWorm · 沉浸式小说阅读器
 
-## Getting Started
+一款面向外语学习者的沉浸式小说阅读器。导入 epub 电子书，享受智能辅助阅读体验。
 
-First, run the development server:
+## 功能
+
+- **EPUB 导入** — 上传 epub 文件，自动解析章节、封面、元数据
+- **人物注释** — 人名高亮标注、悬停卡片、中文名/原文切换
+- **家族关系图** — 人物关系可视化展示
+- **双语翻译** — AI 驱动的段落级翻译，支持多 AI 后端
+- **词汇学习** — 点击查词、生词本、SM-2 间隔重复复习
+- **章节梗概** — AI 生成章节摘要
+- **阅读标注** — 文字高亮、笔记、按章节组织
+- **阅读统计** — 阅读时长追踪、趋势图、连续阅读天数
+
+## 技术栈
+
+- Next.js 16 (App Router)
+- React 19
+- TypeScript 5
+- Prisma 6 + PostgreSQL
+- Tailwind CSS 4
+- Vercel AI SDK (OpenAI / Anthropic / Google)
+- Vitest + Playwright
+
+## 快速开始
+
+### 环境要求
+
+- Node.js 18+
+- PostgreSQL
+
+### 安装
+
+```bash
+npm install
+```
+
+### 配置
+
+创建 `.env` 文件：
+
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/bookworm"
+# 至少配置一个 AI 服务
+OPENAI_API_KEY="sk-..."
+# AI_PROVIDER="openai"  # 可选: openai | anthropic | google
+```
+
+### 数据库
+
+```bash
+npx prisma migrate dev
+npm run db:seed
+```
+
+### 启动
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+打开 http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 项目结构
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── api/                # API 路由
+│   ├── shelf/              # 书架页面
+│   ├── read/[bookSlug]/    # 阅读器页面
+│   ├── vocabulary/         # 生词本页面
+│   ├── review/             # 复习页面
+│   ├── notes/              # 笔记页面
+│   └── stats/              # 统计页面
+├── components/
+│   ├── reader/             # 阅读器组件
+│   ├── shelf/              # 书架组件
+│   ├── sidebar/            # 侧边栏组件
+│   ├── vocabulary/         # 词汇组件
+│   ├── stats/              # 统计组件
+│   └── layout/             # 布局组件
+├── lib/
+│   ├── ai-client.ts        # AI 客户端（多后端）
+│   ├── srs.ts              # SM-2 间隔重复算法
+│   ├── dictionary.ts       # 词典查询服务
+│   ├── translate.ts        # 翻译服务
+│   └── epub-parser.ts      # EPUB 解析器
+└── prisma/
+    └── schema.prisma       # 数据模型
+```
 
-## Learn More
+## 测试
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+# 单元测试
+npx vitest
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# 端到端测试
+npx playwright test
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 部署
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+支持部署到 Vercel 或任何支持 Node.js 的平台。确保设置 `DATABASE_URL` 和 AI 相关环境变量。

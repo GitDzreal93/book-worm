@@ -6,6 +6,8 @@ import { SidebarTabs } from "./SidebarTabs";
 import { TableOfContents } from "./TableOfContents";
 import { CharacterPanel } from "./CharacterPanel";
 import { FamilyTree } from "./FamilyTree";
+import { TranslationPanel } from "@/components/reader/TranslationPanel";
+import { NotesPanel } from "./NotesPanel";
 import { cn } from "@/lib/utils";
 import type { ChapterData, CharacterData, FamilyRelationData } from "@/lib/types";
 
@@ -13,6 +15,24 @@ interface Props {
   chapters: ChapterData[];
   characters: CharacterData[];
   relations: FamilyRelationData[];
+}
+
+/** 侧边栏内容区域，根据当前活动标签显示不同面板 */
+function SidebarContent({ chapters, characters, relations }: { chapters: ChapterData[]; characters: CharacterData[]; relations: FamilyRelationData[] }) {
+  const { activeTab, bookSlug } = useSidebar();
+
+  switch (activeTab) {
+    case "char":
+      return <CharacterPanel characters={characters} />;
+    case "tree":
+      return <FamilyTree characters={characters} relations={relations} />;
+    case "translate":
+      return <TranslationPanel bookSlug={bookSlug} />;
+    case "notes":
+      return <NotesPanel bookSlug={bookSlug} />;
+    default:
+      return <TableOfContents chapters={chapters} />;
+  }
 }
 
 export function Sidebar({ chapters, characters, relations }: Props) {
@@ -31,9 +51,7 @@ export function Sidebar({ chapters, characters, relations }: Props) {
         <DragHandle />
         <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
           <SidebarTabs />
-          <TableOfContents chapters={chapters} />
-          <CharacterPanel characters={characters} />
-          <FamilyTree relations={relations} characters={characters} />
+          <SidebarContent chapters={chapters} characters={characters} relations={relations} />
         </div>
       </div>
 
@@ -46,9 +64,7 @@ export function Sidebar({ chapters, characters, relations }: Props) {
       >
         <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
           <SidebarTabs />
-          <TableOfContents chapters={chapters} />
-          <CharacterPanel characters={characters} />
-          <FamilyTree relations={relations} characters={characters} />
+          <SidebarContent chapters={chapters} characters={characters} relations={relations} />
         </div>
       </div>
     </>

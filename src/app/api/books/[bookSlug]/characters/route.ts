@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+/** GET /api/books/[bookSlug]/characters - 返回人物列表及其名称变体 */
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ bookSlug: string }> },
@@ -15,6 +16,11 @@ export async function GET(
   const characters = await prisma.character.findMany({
     where: { bookId: book.id },
     orderBy: { sortOrder: "asc" },
+    include: {
+      aliases: {
+        orderBy: [{ isPrimary: "desc" }, { alias: "asc" }],
+      },
+    },
   });
 
   return NextResponse.json(characters);

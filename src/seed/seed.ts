@@ -7,7 +7,13 @@ import {
 
 export async function seedBook(prisma: PrismaClient) {
   // Clean existing data (order matters due to FK constraints)
+  await prisma.highlight.deleteMany();
+  await prisma.paragraphTranslation.deleteMany();
   await prisma.characterMention.deleteMany();
+  await prisma.characterAlias.deleteMany();
+  await prisma.reviewLog.deleteMany();
+  await prisma.vocabularyWord.deleteMany();
+  await prisma.readingSession.deleteMany();
   await prisma.familyRelation.deleteMany();
   await prisma.paragraph.deleteMany();
   await prisma.character.deleteMany();

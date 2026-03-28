@@ -30,6 +30,11 @@ export default async function ReaderPage({
   const characters = await prisma.character.findMany({
     where: { bookId: book.id },
     orderBy: { sortOrder: "asc" },
+    include: {
+      aliases: {
+        orderBy: [{ isPrimary: "desc" }, { alias: "asc" }],
+      },
+    },
   });
 
   const relations = await prisma.familyRelation.findMany({
@@ -58,6 +63,12 @@ export default async function ReaderPage({
     colorClass: c.colorClass as CharacterData["colorClass"],
     gen: c.gen,
     desc: c.desc,
+    aliases: c.aliases.map((a) => ({
+      id: a.id,
+      characterId: a.characterId,
+      alias: a.alias,
+      isPrimary: a.isPrimary,
+    })),
   }));
 
   const relationData: FamilyRelationData[] = relations.map((r) => ({
@@ -73,9 +84,11 @@ export default async function ReaderPage({
   }));
 
   return (
-    <SidebarProvider>
+    <SidebarProvider bookSlug={book.slug}>
       <ReaderLayoutClient
+        bookId={book.id}
         bookTitle={book.title}
+        bookSlug={book.slug}
         chapters={chapterData}
         characters={characterData}
         relations={relationData}

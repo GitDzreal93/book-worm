@@ -21,6 +21,9 @@ interface SidebarContextValue {
   setWidth: (w: number) => void;
   isShortNameMain: boolean;
   toggleTextSwap: () => void;
+  showTranslation: boolean;
+  setShowTranslation: (show: boolean) => void;
+  bookSlug: string;
 }
 
 const SidebarContext = createContext<SidebarContextValue | null>(null);
@@ -31,11 +34,12 @@ export function useSidebar() {
   return ctx;
 }
 
-export function SidebarProvider({ children }: { children: ReactNode }) {
+export function SidebarProvider({ children, bookSlug }: { children: ReactNode; bookSlug?: string }) {
   const [isOpen, setIsOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<SidebarTab>("toc");
   const [pinnedCharacter, setPinnedCharacter] = useState<CharacterData | null>(null);
   const [isShortNameMain, setIsShortNameMain] = useState(false);
+  const [showTranslation, setShowTranslation] = useState(false);
 
   const [width, setWidthState] = useState(() => {
     if (typeof window === "undefined") return 290;
@@ -69,6 +73,9 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
         setWidth,
         isShortNameMain,
         toggleTextSwap,
+        showTranslation,
+        setShowTranslation,
+        bookSlug: bookSlug || "",
       }}
     >
       {children}

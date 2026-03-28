@@ -15,10 +15,13 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^3.0.48",
     "@prisma/client": "^6.19.2",
+    "ai": "^6.0.140",
     "cheerio": "^1.2.0",
     "clsx": "^2.1.1",
     "dotenv": "^17.3.1",
+    "fflate": "^0.8.2",
     "next": "16.2.1",
     "prisma": "^6.19.2",
     "react": "19.2.4",
@@ -26,14 +29,17 @@
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.0.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   }
 }

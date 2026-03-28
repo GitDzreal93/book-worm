@@ -9,18 +9,28 @@ datasource db {
 }
 
 model Book {
-  id          String    @id @default(cuid())
-  slug        String    @unique
-  title       String
-  subtitle    String?
-  author      String?
-  description String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id                   String     @id @default(cuid())
+  slug                 String     @unique
+  title                String
+  subtitle             String?
+  author               String?
+  description          String?
+  language             String?
+  coverImage           Bytes?
+  totalChapters        Int        @default(0)
+  totalParagraphs      Int        @default(0)
+  currentChapterId     String?
+  currentParagraphOrder Int?
+  readPercentage       Float      @default(0)
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
 
-  chapters    Chapter[]
-  characters  Character[]
-  relations   FamilyRelation[]
+  chapters             Chapter[]
+  characters           Character[]
+  relations            FamilyRelation[]
+  vocabularyWords      VocabularyWord[]
+  readingSessions      ReadingSession[]
+  highlights           Highlight[]
 }
 
 model Chapter {
@@ -33,6 +43,7 @@ model Chapter {
   updatedAt DateTime   @updatedAt
 
   paragraphs Paragraph[]
+  summary    String?
 
   @@unique([bookId, number])
   @@index([bookId])
@@ -47,7 +58,9 @@ model Paragraph {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
-  mentions CharacterMention[]
+  mentions           CharacterMention[]
+  translation        ParagraphTranslation?
+  highlights         Highlight[]
 
   @@unique([chapterId, order])
   @@index([chapterId])
@@ -66,7 +79,7 @@ model Character {
   createdAt  DateTime            @default(now())
   updatedAt  DateTime            @updatedAt
 
-  mentions          CharacterMention[]
+  aliases           CharacterAlias[]
   familyAsPerson    FamilyRelation[] @relation("FamilyPerson")
   familyAsRelative  FamilyRelation[] @relation("FamilyRelative")
 
@@ -75,15 +88,15 @@ model Character {
 }
 
 model CharacterMention {
-  id          String    @id @default(cuid())
-  characterId String
-  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
-  paragraphId String
-  paragraph   Paragraph @relation(fields: [paragraphId], references: [id], onDelete: Cascade)
-  offset      Int
-  length      Int
+  id                String          @id @default(cuid())
+  characterAliasId  String
+  characterAlias    CharacterAlias  @relation(fields: [characterAliasId], references: [id], onDelete: Cascade)
+  paragraphId       String
+  paragraph         Paragraph       @relation(fields: [paragraphId], references: [id], onDelete: Cascade)
+  offset            Int
+  length            Int
 
-  @@index([characterId])
+  @@index([characterAliasId])
   @@index([paragraphId])
 }
 
@@ -104,4 +117,102 @@ model FamilyRelation {
   @@index([bookId])
   @@index([personId])
   @@index([relativeId])
+}
+
+model CharacterAlias {
+  id         String  @id @default(cuid())
+  characterId String
+  character  Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  alias      String
+  isPrimary  Boolean @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  mentions CharacterMention[]
+
+  @@unique([characterId, alias])
+  @@index([characterId])
+}
+
+model ParagraphTranslation {
+  id         String   @id @default(cuid())
+  paragraphId String
+  paragraph  Paragraph @relation(fields: [paragraphId], references: [id], onDelete: Cascade)
+  content    String
+  isEdited   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([paragraphId])
+}
+
+model VocabularyWord {
+  id              String       @id @default(cuid())
+  bookId          String
+  book            Book         @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  word            String
+  definition      String
+  partOfSpeech    String?
+  phonetic        String?
+  contextSentence String?
+  chapterTitle    String?
+  easeFactor      Float        @default(2.5)
+  interval        Int          @default(0)
+  repetitionCount Int          @default(0)
+  nextReviewDate  DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  reviewLogs ReviewLog[]
+
+  @@unique([bookId, word])
+  @@index([bookId])
+}
+
+model ReviewLog {
+  id         String         @id @default(cuid())
+  wordId     String
+  word       VocabularyWord @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  quality    Int
+  reviewedAt DateTime       @default(now())
+
+  @@index([wordId])
+  @@index([wordId, reviewedAt])
+}
+
+model Highlight {
+  id          String    @id @default(cuid())
+  paragraphId String
+  paragraph   Paragraph @relation(fields: [paragraphId], references: [id], onDelete: Cascade)
+  bookId      String
+  book        Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  startOffset Int
+  endOffset   Int
+  color       String    @default("yellow")
+  note        String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([paragraphId])
+  @@index([bookId])
+}
+
+model ReadingSession {
+  id             String    @id @default(cuid())
+  bookId         String
+  book           Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  startedAt      DateTime  @default(now())
+  endedAt        DateTime?
+  chaptersRead   Int       @default(0)
+  paragraphsRead Int       @default(0)
+
+  @@index([bookId])
+  @@index([bookId, startedAt])
+}
+
+model AiSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
 }

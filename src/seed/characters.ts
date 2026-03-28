@@ -20,6 +20,8 @@ export async function seedCharacters(
   const raw: RawCharacter[] = JSON.parse(fs.readFileSync(CHARACTER_JSON, "utf-8"));
 
   const nickToId = new Map<string, string>();
+  // Map from character ID to primary alias ID (for creating mentions)
+  const charIdToPrimaryAliasId = new Map<string, string>();
 
   for (let i = 0; i < raw.length; i++) {
     const c = raw[i];
@@ -32,12 +34,32 @@ export async function seedCharacters(
         gen: c.gen,
         desc: c.desc,
         sortOrder: i,
+        aliases: {
+          create: [
+            { alias: c.nick, isPrimary: true },
+            ...(c.nick !== c.orig
+              ? [{ alias: c.orig, isPrimary: false }]
+              : []),
+          ],
+        },
       },
     });
     nickToId.set(c.nick, record.id);
+
+    // Find the primary alias ID for mention creation
+    const primaryAlias = await prisma.characterAlias.findFirst({
+      where: { characterId: record.id, isPrimary: true },
+    });
+    if (primaryAlias) {
+      charIdToPrimaryAliasId.set(record.id, primaryAlias.id);
+    }
   }
 
-  console.log(`  Seeded ${raw.length} characters`);
+  // Store alias ID mapping for mention seeding
+  (seedCharacters as unknown as { charIdToPrimaryAliasId: Map<string, string> }).charIdToPrimaryAliasId =
+    charIdToPrimaryAliasId;
+
+  console.log(`  Seeded ${raw.length} characters with aliases`);
   return nickToId;
 }
 
@@ -93,6 +115,11 @@ export async function seedChaptersAndParagraphs(
         const characterId = nickToId.get(nick);
         if (!characterId) continue;
 
+        // Look up the primary alias ID for this character
+        const charIdToPrimaryAliasId = (seedCharacters as unknown as { charIdToPrimaryAliasId: Map<string, string> }).charIdToPrimaryAliasId;
+        const characterAliasId = charIdToPrimaryAliasId?.get(characterId);
+        if (!characterAliasId) continue;
+
         // Calculate offset in the HTML string
         const outerHtml = $.html(ruby) || "";
         const offset = content.indexOf(outerHtml);
@@ -104,7 +131,7 @@ export async function seedChaptersAndParagraphs(
 
         await prisma.characterMention.create({
           data: {
-            characterId,
+            characterAliasId,
             paragraphId: paragraph.id,
             offset,
             length,
