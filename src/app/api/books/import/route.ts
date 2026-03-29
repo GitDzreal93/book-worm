@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseEpub, generateSlug } from "@/lib/epub-parser";
+import { getSetting } from "@/lib/settings";
 
 /** POST /api/books/import - 上传并导入 epub 文件 */
 export async function POST(request: NextRequest) {
@@ -76,6 +77,31 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Fire-and-forget LLM generation if a provider is configured
+    let generationStarted = false;
+    try {
+      const provider = await getSetting("default_provider");
+      const apiKeyField =
+        provider === "custom" ? "custom_provider_api_key" : `${provider}_api_key`;
+      const apiKey = provider ? await getSetting(apiKeyField) : null;
+
+      if (provider && apiKey) {
+        const baseUrl =
+          typeof process !== "undefined"
+            ? `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}`
+            : "http://localhost:3000";
+
+        fetch(`${baseUrl}/api/books/${book.slug}/generate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ target: "all" }),
+        }).catch(() => {});
+        generationStarted = true;
+      }
+    } catch {
+      // Non-fatal: generation trigger failure should not fail the import
+    }
+
     return NextResponse.json(
       {
         id: book.id,
@@ -84,6 +110,7 @@ export async function POST(request: NextRequest) {
         author: book.author,
         totalChapters: book.totalChapters,
         totalParagraphs: book.totalParagraphs,
+        generationStarted,
       },
       { status: 201 }
     );

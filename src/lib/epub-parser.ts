@@ -119,22 +119,20 @@ function parseOpfMetadata(
   const opfContent = readTextFile(files, opfPath);
   const $ = cheerio.load(opfContent, { xmlMode: true });
 
-  // Dublin Core namespace elements: dc:title, dc:creator, dc:language
+  // Dublin Core namespace elements — cheerio xmlMode requires escaping `:` in selectors
   const title =
+    $("dc\\:title").first().text().trim() ||
     $("metadata title").first().text().trim() ||
-    $("metadata\\:title").first().text().trim() ||
-    $("[\\:xmlns]").find("title").first().text().trim() ||
     "Untitled";
 
-  // Try multiple author selectors
   const author =
+    $("dc\\:creator").first().text().trim() ||
     $("metadata creator").first().text().trim() ||
-    $("metadata\\:creator").first().text().trim() ||
     null;
 
   const language =
+    $("dc\\:language").first().text().trim() ||
     $("metadata language").first().text().trim() ||
-    $("metadata\\:language").first().text().trim() ||
     null;
 
   return { title, author, language };
@@ -330,21 +328,12 @@ function extractChapterContent(
   const content = readTextFile(files, filePath);
   const $ = cheerio.load(content, { xmlMode: false });
 
-  // Collect only leaf-level block elements to avoid duplicate text
+  // Collect only leaf-level block elements (those with no block children) to
+  // avoid duplicating text that would appear in both a parent and child element.
   const paragraphs: string[] = [];
-  const BLOCK_TAGS = new Set(["p", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "li", "dt", "dd", "pre"]);
 
   $("body").find(BLOCK_SELECTORS).each((_index, element) => {
-    // Skip if this element is nested inside another block element we'll also visit
-    const parent = $(element).parent().get(0);
-    if (parent && BLOCK_TAGS.has((parent.tagName ?? "").toLowerCase())) {
-      // e.g. <li> inside <blockquote>, or <p> inside <blockquote>
-      // only skip if the parent itself is a tracked block (not body/div/section)
-    }
-
-    // Skip if this element contains child block elements (not a leaf)
-    const hasBlockChild = $(element).find(BLOCK_SELECTORS).length > 0;
-    if (hasBlockChild) return;
+    if ($(element).find(BLOCK_SELECTORS).length > 0) return;
 
     const text = $(element).text().trim();
     if (text.length > 0) {
@@ -546,7 +535,7 @@ export function parseEpub(buffer: ArrayBuffer): EpubData {
  * ```
  */
 export function generateSlug(title: string): string {
-  return title
+  const slug = title
     .trim()
     .toLowerCase()
     // Common Unicode -> ASCII transliterations
@@ -563,10 +552,13 @@ export function generateSlug(title: string): string {
     .replace(/\u00df/g, "ss")
     .replace(/\u2019|\u2018/g, "'")
     .replace(/\u201c|\u201d/g, '"')
-    // Replace any remaining non-alphanumeric (except spaces/hyphens) with nothing
-    .replace(/[^a-z0-9\s-]/g, "")
+    // Keep Unicode letters/numbers (incl. CJK); strip everything else except spaces/hyphens
+    .replace(/[^\p{L}\p{N}\s-]/gu, "")
     // Collapse whitespace and hyphens into a single hyphen
     .replace(/[\s-]+/g, "-")
     // Remove leading/trailing hyphens
     .replace(/^-+|-+$/g, "");
+
+  // Fallback for titles that produce an empty slug after stripping (e.g. pure symbol titles)
+  return slug || `book-${Date.now()}`;
 }
