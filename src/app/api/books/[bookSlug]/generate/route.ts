@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateCompletion } from "@/lib/ai-client";
+import { extractNameCandidates } from "@/lib/extract-names";
 
 interface GenStatus {
   status: "idle" | "processing" | "done" | "error";
@@ -53,21 +54,26 @@ async function runGeneration(slug: string, bookId: string, title: string, target
   STATUS.error = null;
 
   try {
+    // Broader sampling: up to 30 chapters × 5 paragraphs for better coverage
     const chapters = await prisma.chapter.findMany({
       where: { bookId },
       orderBy: { number: "asc" },
-      take: 10,
+      take: 30,
       include: { paragraphs: { orderBy: { order: "asc" }, take: 5 } },
     });
 
     const sample = chapters
       .map((ch) => `【${ch.title}】\n${ch.paragraphs.map((p) => p.content).join("\n")}`)
       .join("\n\n")
-      .slice(0, 6000);
+      .slice(0, 12000);
+
+    // Extract name candidates from broader text for LLM reference
+    const fullText = await collectFullText(bookId);
+    const nameCandidates = extractNameCandidates(fullText);
 
     if (target === "all" || target === "characters") {
       STATUS.step = "characters";
-      await generateCharacters(bookId, title, sample);
+      await generateCharacters(bookId, title, sample, nameCandidates);
     }
 
     if (target === "all" || target === "relations") {
@@ -85,17 +91,43 @@ async function runGeneration(slug: string, bookId: string, title: string, target
 }
 
 // ---------------------------------------------------------------------------
+
+/** Collect paragraph content from the full book for name extraction. */
+async function collectFullText(bookId: string): string {
+  const chapters = await prisma.chapter.findMany({
+    where: { bookId },
+    orderBy: { number: "asc" },
+    select: { paragraphs: { select: { content: true }, take: 10, orderBy: { order: "asc" } } },
+    take: 50,
+  });
+
+  const parts: string[] = [];
+  for (const ch of chapters) {
+    for (const p of ch.paragraphs) {
+      parts.push(p.content);
+    }
+  }
+  return parts.join("\n");
+}
+
+// ---------------------------------------------------------------------------
 // Character generation
 // ---------------------------------------------------------------------------
 
 const CHAR_SYSTEM = `你是小说人物分析专家。分析小说文本，提取所有重要人物，以JSON返回：
-{"characters":[{"nick":"简称(2-6字)","orig":"全名","colorClass":"颜色分组","gen":"世代/身份","desc":"简介(50字内)","aliases":["别名"],"sortOrder":1}]}
+{"characters":[{"nick":"简称(2-6字)","orig":"全名","colorClass":"颜色分组","gen":"世代/身份","desc":"简介(50字内)","aliases":["别名1","别名2"],"sortOrder":1}]}
 
 colorClass取值：
 - "ct-orel"：主线男性角色A/主角
 - "ct-jose"：主线男性角色B/次主角
 - "ct-female"：女性人物
 - "ct-outsider"：外来/配角/次要人物
+
+重要规则：
+1. aliases 必须包含该角色在书中出现的所有称呼变体（全名、带称号名、简称、绰号等）
+2. 如果提供了"人名候选列表"，请以此为主要参考依据，不要遗漏高频人名
+3. 同一角色的不同称呼（如"奥雷里亚诺·布恩迪亚上校"和"奥雷里亚诺"）应归为同一人物的 aliases
+4. nick 是你给角色起的中文简称，orig 是最常用的完整原名
 
 只返回JSON，不要其他内容。`;
 
@@ -109,8 +141,22 @@ interface LLMCharacter {
   sortOrder?: number;
 }
 
-async function generateCharacters(bookId: string, title: string, sample: string) {
-  const prompt = `书名：${title}\n\n章节内容：\n${sample}`;
+async function generateCharacters(
+  bookId: string,
+  title: string,
+  sample: string,
+  nameCandidates: Array<{ name: string; count: number }>,
+) {
+  // Build name candidate hint for the LLM prompt
+  let nameHint = "";
+  if (nameCandidates.length > 0) {
+    const lines = nameCandidates
+      .slice(0, 80)
+      .map((c) => `  ${c.name}（${c.count}次）`);
+    nameHint = `\n\n以下是书中实际出现的人名候选（含间隔号的名字及其出现次数），请据此识别角色：\n${lines.join("\n")}`;
+  }
+
+  const prompt = `书名：${title}${nameHint}\n\n章节内容：\n${sample}`;
   const raw = await generateCompletion(prompt, CHAR_SYSTEM);
 
   const m = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/);

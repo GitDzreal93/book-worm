@@ -10,12 +10,21 @@ interface AnnotationEntry {
   desc: string;
 }
 
-function escapeRegex(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
 function attr(value: string): string {
   return value.replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function makeRubyTag(entry: AnnotationEntry, matchedText: string): string {
+  return (
+    `<ruby class="cn ${entry.colorClass}" ` +
+    `data-nick="${attr(entry.nick)}" ` +
+    `data-orig="${attr(entry.orig)}" ` +
+    `data-id="${entry.id}" ` +
+    `data-color-class="${entry.colorClass}" ` +
+    `data-gen="${attr(entry.gen)}" ` +
+    `data-desc="${attr(entry.desc)}">` +
+    `${matchedText}<rt>${entry.nick}</rt></ruby>`
+  );
 }
 
 function buildEntries(characters: CharacterData[]): AnnotationEntry[] {
@@ -40,18 +49,49 @@ function buildEntries(characters: CharacterData[]): AnnotationEntry[] {
     }
   }
 
-  // Longer aliases first — regex alternation tries left-to-right so longer wins
+  // Longer aliases first — critical for placeholder algorithm correctness
   entries.sort((a, b) => b.alias.length - a.alias.length);
   return entries;
+}
+
+/**
+ * Annotate a single plain-text segment using the placeholder algorithm.
+ *
+ * Long names are matched first and replaced with unique placeholders (\x00PHn\x00).
+ * Once a region is consumed by a placeholder, shorter aliases cannot match inside it.
+ * Finally, all placeholders are replaced with <ruby> tags.
+ */
+function annotateSegment(text: string, entries: AnnotationEntry[]): string {
+  const placeholders = new Map<string, string>();
+  let counter = 0;
+
+  for (const entry of entries) {
+    let start = 0;
+    while (true) {
+      const idx = text.indexOf(entry.alias, start);
+      if (idx === -1) break;
+      const ph = `\x00PH${counter}\x00`;
+      counter++;
+      text = text.slice(0, idx) + ph + text.slice(idx + entry.alias.length);
+      placeholders.set(ph, makeRubyTag(entry, entry.alias));
+      start = idx + ph.length;
+    }
+  }
+
+  for (const [ph, tag] of placeholders) {
+    text = text.replaceAll(ph, tag);
+  }
+
+  return text;
 }
 
 /**
  * Client-side annotation: replaces character name occurrences in plain text
  * with `<ruby class="cn ...">` markup for the reader's hover/tooltip system.
  *
- * Uses a single-pass combined regex per text segment to prevent nested
- * ruby tags (which would occur with iterative per-alias replacements when a
- * short alias is a substring of a longer one that was already replaced).
+ * Uses a placeholder-based algorithm: long names are matched first and replaced
+ * with temporary placeholders, preventing short aliases from matching inside
+ * already-consumed substrings (e.g. "伊凡" inside "索菲亚·伊凡诺芙娜").
  */
 export function annotateText(text: string, characters: CharacterData[]): string {
   if (!characters.length || !text.trim()) return text;
@@ -59,33 +99,13 @@ export function annotateText(text: string, characters: CharacterData[]): string 
   const entries = buildEntries(characters);
   if (entries.length === 0) return text;
 
-  // Lookup map: matched alias text → entry
-  const aliasMap = new Map<string, AnnotationEntry>(entries.map((e) => [e.alias, e]));
-
-  // Combined alternation regex — tries alternatives left-to-right (longest first)
-  const combined = new RegExp(entries.map((e) => escapeRegex(e.alias)).join("|"), "g");
-
   // Process only non-tag segments to avoid annotating inside HTML attributes/tags
   const segments = text.split(/(<[^>]+>)/g);
 
   return segments
     .map((seg) => {
       if (!seg || seg.startsWith("<")) return seg;
-
-      return seg.replace(combined, (match) => {
-        const entry = aliasMap.get(match);
-        if (!entry) return match;
-        return (
-          `<ruby class="cn ${entry.colorClass}" ` +
-          `data-nick="${attr(entry.nick)}" ` +
-          `data-orig="${attr(entry.orig)}" ` +
-          `data-id="${entry.id}" ` +
-          `data-color-class="${entry.colorClass}" ` +
-          `data-gen="${attr(entry.gen)}" ` +
-          `data-desc="${attr(entry.desc)}">` +
-          `${match}<rt>${entry.nick}</rt></ruby>`
-        );
-      });
+      return annotateSegment(seg, entries);
     })
     .join("");
 }
